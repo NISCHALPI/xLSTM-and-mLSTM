@@ -120,7 +120,7 @@ class sLSTMCell(nn.Module):
         )  # (batch_size, hidden_size), (batch_size, hidden_size), (batch_size, hidden_size), (batch_size, hidden_size)
 
     def init_hidden(
-        self, batch_size: int
+        self, batch_size: int, **kwargs
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Initializes the hidden state of the model.
@@ -132,10 +132,10 @@ class sLSTMCell(nn.Module):
             tuple: Tuple containing the initialized hidden state, cell state, normalization state, and stabilization state.
         """
         return (
-            torch.zeros(batch_size, self.hidden_size),
-            torch.zeros(batch_size, self.hidden_size),
-            torch.zeros(batch_size, self.hidden_size),
-            torch.zeros(batch_size, self.hidden_size),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
         )
 
 
@@ -216,7 +216,7 @@ class sLSTM(nn.Module):
 
         # Initialize the hidden states if not provided
         if hidden_states is None:
-            hidden_states = self.init_hidden(x.size(1))
+            hidden_states = self.init_hidden(x.size(1), device=x.device, dtype=x.dtype)
         else:
             # Check if the hidden states are of the correct length
             if len(hidden_states) != self.num_layers:
@@ -256,7 +256,7 @@ class sLSTM(nn.Module):
         return H[-1], (H, C, N, M)
 
     def init_hidden(
-        self, batch_size: int
+        self, batch_size: int, **kwargs
     ) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
         """
         Initializes the hidden state of the model.
@@ -267,7 +267,7 @@ class sLSTM(nn.Module):
         Returns:
             list: List containing the initialized hidden states for each layer.
         """
-        return [cell.init_hidden(batch_size) for cell in self.cells]
+        return [cell.init_hidden(batch_size, **kwargs) for cell in self.cells]
 
 
 class mLSTMCell(nn.Module):
@@ -406,7 +406,7 @@ class mLSTMCell(nn.Module):
 
         return h_t, (C_t, n_t, m_t)
 
-    def init_hidden(self, batch_size: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def init_hidden(self, batch_size: int, **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
         """Initializes the hidden state of the model.
 
         Args:
@@ -416,9 +416,9 @@ class mLSTMCell(nn.Module):
             Tuple[torch.Tensor, torch.Tensor]: Initialized covariance matrix and normalization state.
         """
         return (
-            torch.zeros(batch_size, self.hidden_size, self.hidden_size),
-            torch.zeros(batch_size, self.hidden_size),
-            torch.zeros(batch_size, self.hidden_size),
+            torch.zeros(batch_size, self.hidden_size, self.hidden_size, **kwargs),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
+            torch.zeros(batch_size, self.hidden_size, **kwargs),
         )
 
 
@@ -494,7 +494,7 @@ class mLSTM(nn.Module):
             x = x.permute(1, 0, 2)
 
         if hidden_states is None:
-            hidden_states = self.init_hidden(x.size(1))
+            hidden_states = self.init_hidden(x.size(1), device=x.device, dtype=x.dtype)
         else:
             # Check if the hidden states are of the correct length
             if len(hidden_states) != self.num_layers:
@@ -534,7 +534,7 @@ class mLSTM(nn.Module):
         return H[-1], (H, C, N, M)
 
     def init_hidden(
-        self, batch_size: int
+        self, batch_size: int, **kwargs
     ) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         """
         Initializes the hidden state of the model.
@@ -545,4 +545,4 @@ class mLSTM(nn.Module):
         Returns:
             list: List containing the initialized hidden states for each layer.
         """
-        return [cell.init_hidden(batch_size) for cell in self.cells]
+        return [cell.init_hidden(batch_size, **kwargs) for cell in self.cells]
