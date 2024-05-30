@@ -394,7 +394,10 @@ class mLSTMCell(nn.Module):
         m_t = torch.max(torch.log(f_t) + m, torch.log(i_t))
         i_prime = torch.exp(i_tilda - m_t)
 
-        C_t = f_t.unsqueeze(-1) * C + torch.einsum("bi, bk -> bik", v_t, k_t)
+        # Covarieance matrix and normalization state
+        C_t = f_t.unsqueeze(-1) * C + i_prime.unsqueeze(-1) * torch.einsum(
+            "bi, bk -> bik", v_t, k_t
+        )
         n_t = f_t * n + i_prime * k_t
 
         normalize_inner = torch.diagonal(torch.matmul(n_t, q_t.T))
@@ -406,7 +409,9 @@ class mLSTMCell(nn.Module):
 
         return h_t, (C_t, n_t, m_t)
 
-    def init_hidden(self, batch_size: int, **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
+    def init_hidden(
+        self, batch_size: int, **kwargs
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Initializes the hidden state of the model.
 
         Args:
